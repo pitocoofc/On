@@ -31,72 +31,46 @@
 <div id="map"></div>
 
 <script>
-const map = L.map('map', {
-  zoomControl: true,
-  preferCanvas: true // 🔥 melhora MUITO performance
-});
+const map = L.map('map').setView([-29.7061, -53.7964], 12);
 
-// 🔥 Função de cor dinâmica
-function getColor(casos) {
-  return casos > 50 ? "#ff0000" :
-         casos > 20 ? "#ff5e00" :
-         casos > 10 ? "#ffaa00" :
-         casos > 5  ? "#ffee00" :
-                      "#00ff9d";
+// fundo (opcional)
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// cor baseada nos dados
+function getColor(v) {
+  return v > 50 ? '#993404' :
+         v > 20 ? '#d95f0e' :
+         v > 10 ? '#fe9929' :
+         v > 5  ? '#fed98e' :
+         v > 1  ? '#ffffd4' :
+                  '#ffffff';
 }
 
-// 🔥 Estilo otimizado
 function style(feature) {
   return {
-    color: "#00ff9d",
-    weight: 0.6,
-    fillColor: getColor(feature.properties.confirmados || 0),
-    fillOpacity: 0.35
+    fillColor: getColor(feature.properties.confirmados),
+    weight: 1,
+    color: '#aaa',
+    fillOpacity: 0.7
   };
 }
 
-// 🔥 Interação leve
-function onEachFeature(feature, layer) {
-  const p = feature.properties;
-
-  layer.bindPopup(`
-    <div class="popup">
-      <b>${p.bairro || "Desconhecido"}</b><br>
-      🦠 Casos: ${p.confirmados || 0}<br>
-      ⚰️ Óbitos: ${p.obitos || 0}
-    </div>
-  `);
-
-  // Hover leve
-  layer.on({
-    mouseover: (e) => {
-      e.target.setStyle({
-        weight: 1.5,
-        fillOpacity: 0.6
-      });
-    },
-    mouseout: (e) => {
-      geojson.resetStyle(e.target);
-    }
-  });
-}
-
-let geojson;
-
-// 🔥 Carregar GeoJSON
 fetch('bairros.geojson')
   .then(res => res.json())
   .then(data => {
 
-    geojson = L.geoJSON(data, {
+    const layer = L.geoJSON(data, {
       style,
-      onEachFeature,
-      renderer: L.canvas()
+      onEachFeature: (feature, layer) => {
+        layer.bindPopup(
+          `Bairro: ${feature.properties.bairro}<br>
+           <b>${feature.properties.confirmados}</b> casos<br>
+           <b>${feature.properties.obitos}</b> óbitos`
+        );
+      }
     }).addTo(map);
 
-    // 🔥 Ajusta automaticamente
-    map.fitBounds(geojson.getBounds());
-
+    map.fitBounds(layer.getBounds());
   });
 </script>
 

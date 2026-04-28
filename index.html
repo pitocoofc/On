@@ -1,47 +1,36 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <title>Ghost Search OS - Map Engine</title>
     <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
-        canvas { display: block; }
+        body { margin: 0; background: #000; overflow: hidden; }
+        #mapa-container { width: 100vw; height: 100vh; }
+        #mapa-container object { width: 100%; height: 100%; }
     </style>
 </head>
 <body>
-    <canvas id="mapa"></canvas>
+
+    <div id="mapa-container">
+        <object id="mapa-obj" data="mapa.svg" type="image/svg+xml"></object>
+    </div>
+
     <script>
-        const canvas = document.getElementById('mapa');
-        const ctx = canvas.getContext('2d');
+        const mapaObj = document.getElementById('mapa-obj');
 
-        async function carregarMapa() {
-            // AJUSTE: Coloque aqui o nome exato do seu arquivo no repo
-            const response = await fetch('bairros.geojson'); 
-            const data = await response.json();
+        // Espera o SVG carregar totalmente antes de tentar interagir
+        mapaObj.addEventListener('load', () => {
+            const svgDoc = mapaObj.contentDocument; // Acessa o DOM interno do SVG
             
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            // Bounding Box manual para centralizar (Ajuste conforme sua cidade)
-            const minX = -53.85, maxX = -53.65, minY = -29.75, maxY = -29.65;
-
-            ctx.strokeStyle = '#00FF00'; // Cor Ghost
-            ctx.lineWidth = 1;
-
-            data.features.forEach(feat => {
-                const coords = feat.geometry.coordinates;
-                ctx.beginPath();
-                coords.forEach(poly => {
-                    poly[0].forEach((p, i) => {
-                        const x = (p[0] - minX) / (maxX - minX) * canvas.width;
-                        const y = (maxY - p[1]) / (maxY - minY) * canvas.height;
-                        if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-                    });
+            // Agora você tem controle total como se fosse um HTML comum
+            const brasil = svgDoc.getElementById('Brazil');
+            if(brasil) {
+                brasil.style.fill = '#002200';
+                brasil.addEventListener('click', () => {
+                    alert("Acessando dados de Santa Maria...");
                 });
-                ctx.stroke();
-            });
-        }
-        carregarMapa();
-        window.onresize = carregarMapa;
+            }
+        });
     </script>
 </body>
 </html>

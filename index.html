@@ -1,63 +1,47 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <style>
-        /* Isso garante que o mapa ocupe 100% da tela */
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
         canvas { display: block; }
     </style>
 </head>
 <body>
-
-    <canvas id="mapCanvas"></canvas>
-
+    <canvas id="mapa"></canvas>
     <script>
-        const canvas = document.getElementById('mapCanvas');
+        const canvas = document.getElementById('mapa');
         const ctx = canvas.getContext('2d');
 
-        // Ajusta o canvas ao tamanho da tela automaticamente
-        function resize() {
+        async function carregarMapa() {
+            // AJUSTE: Coloque aqui o nome exato do seu arquivo no repo
+            const response = await fetch('bairros.geojson'); 
+            const data = await response.json();
+            
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-            // Redesenha caso o usuário redimensione a janela
-            if(window.geoData) renderizar(window.geoData);
-        }
-        window.addEventListener('resize', resize);
-        resize();
 
-        // Carrega o seu arquivo GeoJSON (deve estar na mesma pasta ou caminho acessível)
-        fetch('bairros.geojson')
-            .then(res => res.json())
-            .then(data => {
-                window.geoData = data;
-                renderizar(data);
-            });
+            // Bounding Box manual para centralizar (Ajuste conforme sua cidade)
+            const minX = -53.85, maxX = -53.65, minY = -29.75, maxY = -29.65;
 
-        function renderizar(data) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Defina aqui os limites geográficos da sua área para o mapa centralizar/escalar
-            // Usei valores aproximados baseados nos seus dados (-53.8, -29.7)
-            const minLon = -53.85, maxLon = -53.65;
-            const minLat = -29.75, maxLat = -29.65;
+            ctx.strokeStyle = '#00FF00'; // Cor Ghost
+            ctx.lineWidth = 1;
 
             data.features.forEach(feat => {
+                const coords = feat.geometry.coordinates;
                 ctx.beginPath();
-                ctx.strokeStyle = '#0f0'; // Verde estilo terminal
-                ctx.lineWidth = 1;
-
-                feat.geometry.coordinates.forEach(polygon => {
-                    polygon[0].forEach((p, i) => {
-                        const x = (p[0] - minLon) / (maxLon - minLon) * canvas.width;
-                        const y = (maxLat - p[1]) / (maxLat - minLat) * canvas.height;
-                        if (i === 0) ctx.moveTo(x, y);
-                        else ctx.lineTo(x, y);
+                coords.forEach(poly => {
+                    poly[0].forEach((p, i) => {
+                        const x = (p[0] - minX) / (maxX - minX) * canvas.width;
+                        const y = (maxY - p[1]) / (maxY - minY) * canvas.height;
+                        if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
                     });
                 });
                 ctx.stroke();
             });
         }
+        carregarMapa();
+        window.onresize = carregarMapa;
     </script>
 </body>
 </html>
